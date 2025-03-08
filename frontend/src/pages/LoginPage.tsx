@@ -34,6 +34,8 @@ export default function LoginPage() {
       navigator("/");
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   }
 

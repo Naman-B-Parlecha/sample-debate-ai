@@ -17,7 +17,7 @@ func NewAuthHandler(authService *services.AuthService) *AuthHandler {
 }
 
 func (h *AuthHandler) RegisterUser(ctx *gin.Context) {
-	var user models.User
+	var user models.Auth
 
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -35,7 +35,7 @@ func (h *AuthHandler) RegisterUser(ctx *gin.Context) {
 }
 
 func (h *AuthHandler) LoginUser(ctx *gin.Context) {
-	var user models.User
+	var user models.Auth
 
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{

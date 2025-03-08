@@ -16,13 +16,13 @@ func NewAuthService(client *supabase.Client) *AuthService {
 	return &AuthService{client: client}
 }
 
-func (s *AuthService) RegisterUser(user *models.User) error {
+func (s *AuthService) RegisterUser(user *models.Auth) error {
 	ctx := context.Background()
 	_, err := s.client.Auth.SignUp(ctx, supabase.UserCredentials{Email: user.Email, Password: user.Password})
 	return err
 }
 
-func (s *AuthService) LoginUser(user *models.User) (string, error) {
+func (s *AuthService) LoginUser(user *models.Auth) (string, error) {
 	ctx := context.Background()
 	authResponse, err := s.client.Auth.SignIn(ctx, supabase.UserCredentials{Email: user.Email, Password: user.Password})
 	if err != nil {

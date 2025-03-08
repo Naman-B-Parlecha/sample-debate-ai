@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./pages/ProtectedRoute.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import SignUpPage from "./pages/SignUpPage.tsx";
+import Navbar from "./components/navbar.tsx";
 
 const App: React.FC = () => {
   return (
@@ -14,6 +15,7 @@ const App: React.FC = () => {
           path="/"
           element={
             <ProtectedRoute>
+              <Navbar />
               <>Home</>
             </ProtectedRoute>
           }
