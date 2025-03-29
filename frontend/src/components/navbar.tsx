@@ -14,7 +14,7 @@ const NavBar= () => {
     };
 
   return (
-    <nav className="flex items-center justify-between p-4 bg-white shadow-md">
+    <nav className="flex items-center justify-between p-4 bg-white shadow-md sticky top-0 z-50">
       <div className="flex items-center">
         <img src="/aossie.png" alt="Logo" className="h-8 w-8 mr-2" />
         <span className="font-semibold text-lg">DebateAI</span>
