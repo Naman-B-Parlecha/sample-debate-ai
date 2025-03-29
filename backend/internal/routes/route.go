@@ -13,6 +13,7 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 
 	supabaseClient := supabase.NewSupabaseClient(cfg)
 
+	// this is for auth routes
 	authServices := services.NewAuthService(supabaseClient)
 	authHandler := handler.NewAuthHandler(authServices)
 
@@ -21,6 +22,7 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 	authGroup.POST("/register", authHandler.RegisterUser)
 	authGroup.POST("/login", authHandler.LoginUser)
 
+	// this is for Profile routes
 	profileService := services.NewProfileServer(supabaseClient)
 	profileHandler := handler.NewProfileHandler(profileService)
 
@@ -29,5 +31,16 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 	{
 		profileGroup.GET("/", profileHandler.GetProfile)
 		profileGroup.PUT("/", profileHandler.UpdateProfile)
+	}
+
+	// this is for debate routes
+	debateService := services.NewDebateService(supabaseClient)
+	debateHandler := handler.NewDebateHandler(debateService)
+
+	debateGroup := r.Group("debate")
+
+	debateGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+	{
+		debateGroup.POST("/", debateHandler.CreateDebate)
 	}
 }

@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -21,7 +20,6 @@ func AuthMiddleware(JWTSecret string) gin.HandlerFunc {
 		}
 
 		onlyToken := strings.Replace(tokenString, "Bearer ", "", 1)
-		log.Printf("Token : %s", onlyToken)
 
 		token, err := jwt.Parse(onlyToken, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
