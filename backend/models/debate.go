@@ -46,3 +46,13 @@ type Format struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
+
+type Round struct {
+	Format_id    string `json:"format_id"`
+	Debate_id    string `json:"debate_id"`
+	Round_number int    `json:"round_number"`
+	Round_type   string `json:"type"`
+	Duration     int    `json:"duration"`
+	Start_at     string `json:"start_at"`
+	End_at       string `json:"end_at"`
+}
