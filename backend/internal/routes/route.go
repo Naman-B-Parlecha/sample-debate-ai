@@ -12,7 +12,7 @@ import (
 func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 
 	supabaseClient := supabase.NewSupabaseClient(cfg)
-
+	HF_APIkey := cfg.HF_ApiKey
 	// this is for auth routes
 	authServices := services.NewAuthService(supabaseClient)
 	authHandler := handler.NewAuthHandler(authServices)
@@ -42,5 +42,15 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 	debateGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	{
 		debateGroup.POST("/", debateHandler.CreateDebate)
+	}
+
+	// this is for arguments routes
+	argumentService := services.NewArgumentService(supabaseClient, HF_APIkey)
+	argumentsHandler := handler.NewArgumentsHandler(argumentService)
+
+	argumentsGroup := r.Group("arguments")
+	argumentsGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+	{
+		argumentsGroup.POST("/", argumentsHandler.GetArguments)
 	}
 }

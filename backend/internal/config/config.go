@@ -11,6 +11,7 @@ type Config struct {
 	SupabaseKey string
 	JWTSecret   string
 	ServerPort  string
+	HF_ApiKey   string
 }
 
 func LoadConfig() Config {
@@ -21,6 +22,7 @@ func LoadConfig() Config {
 		SupabaseKey: getEnv("SUPABASE_KEY", ""),
 		JWTSecret:   getEnv("JWT_SECRET", ""),
 		ServerPort:  getEnv("SERVER_PORT", "8080"),
+		HF_ApiKey:   getEnv("HF_API_KEY", ""),
 	}
 }
 
