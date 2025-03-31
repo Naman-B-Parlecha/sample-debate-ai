@@ -71,7 +71,15 @@ func (s *DebateService) CreateParticipant(participant *models.Participant) error
 func (s *DebateService) CreateRound(roundDetails *models.Round) (map[string]interface{}, error) {
 	var results []models.Round
 	err := s.client.DB.From("Debate Round").
-		Insert(roundDetails).Execute(&results)
+		Insert(map[string]interface{}{
+			"format_id":    roundDetails.Format_id,
+			"debate_id":    roundDetails.Debate_id,
+			"round_number": roundDetails.Round_number,
+			"type":         roundDetails.Round_type,
+			"duration":     roundDetails.Duration,
+			"start_at":     roundDetails.Start_at,
+			"end_at":       roundDetails.End_at,
+		}).Execute(&results)
 
 	if err != nil {
 		return nil, fmt.Errorf("Supabase error: %v", err)
@@ -82,5 +90,5 @@ func (s *DebateService) CreateRound(roundDetails *models.Round) (map[string]inte
 	}
 
 	log.Printf("Inserted round: %+v", results[0])
-	return map[string]interface{}{"format_id": results[0].Format_id, "debate_id": results[0].Debate_id, "round_number": results[0].Round_number, "type": results[0].Round_type, "duration": results[0].Duration, "start_at": results[0].Start_at, "end_at": results[0].End_at}, nil
+	return map[string]interface{}{"id": results[0].Id, "format_id": results[0].Format_id, "debate_id": results[0].Debate_id, "round_number": results[0].Round_number, "type": results[0].Round_type, "duration": results[0].Duration, "start_at": results[0].Start_at, "end_at": results[0].End_at}, nil
 }

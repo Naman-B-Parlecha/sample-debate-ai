@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
@@ -101,40 +100,39 @@ function getAIAgents(): AIAgent[] {
   }
   
 
-export function AIAgentSelector() {
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("medium")
+export function AIAgentSelector({selectAiAgent,difficulty, selectedDifficultyLevel}: {selectAiAgent: (agent: AIAgent) => void,difficulty: string, selectedDifficultyLevel: (difficulty: string) => void}) {
   const aiAgents = getAIAgents()
 
-  const filteredAgents = aiAgents.filter((agent) => agent.difficulty === selectedDifficulty)
+  const filteredAgents = aiAgents.filter((agent) => agent.difficulty === difficulty)
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         <Badge
-          variant={selectedDifficulty === "easy" ? "default" : "outline"}
+          variant={difficulty === "easy" ? "default" : "outline"}
           className="cursor-pointer"
-          onClick={() => setSelectedDifficulty("easy")}
+          onClick={() => selectedDifficultyLevel("easy")}
         >
           Easy
         </Badge>
         <Badge
-          variant={selectedDifficulty === "medium" ? "default" : "outline"}
+          variant={difficulty === "medium" ? "default" : "outline"}
           className="cursor-pointer"
-          onClick={() => setSelectedDifficulty("medium")}
+          onClick={() => selectedDifficultyLevel("medium")}
         >
           Medium
         </Badge>
         <Badge
-          variant={selectedDifficulty === "hard" ? "default" : "outline"}
+          variant={difficulty === "hard" ? "default" : "outline"}
           className="cursor-pointer"
-          onClick={() => setSelectedDifficulty("hard")}
+          onClick={() => selectedDifficultyLevel("hard")}
         >
           Hard
         </Badge>
         <Badge
-          variant={selectedDifficulty === "expert" ? "default" : "outline"}
+          variant={difficulty === "expert" ? "default" : "outline"}
           className="cursor-pointer"
-          onClick={() => setSelectedDifficulty("expert")}
+          onClick={() => selectedDifficultyLevel("expert")}
         >
           Expert
         </Badge>
@@ -146,7 +144,7 @@ export function AIAgentSelector() {
             <Card key={agent.id} className="overflow-hidden">
               <div className="flex">
                 <div className="p-4 flex items-center">
-                  <RadioGroupItem value={agent.id} id={agent.id} />
+                  <RadioGroupItem value={agent.id} id={agent.id} onClick={()=>selectAiAgent(agent)} />
                 </div>
                 <CardContent className="p-4 pl-0">
                   <Label htmlFor={agent.id} className="font-medium cursor-pointer">

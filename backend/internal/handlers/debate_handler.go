@@ -27,6 +27,8 @@ func (h *DebateHandler) CreateDebate(ctx *gin.Context) {
 		ParticipantType string   `json:"participant_type"`
 		Difficulty      string   `json:"difficulty"`
 		AiModel         string   `json:"ai_model"`
+		Position        string   `json:"position"`
+		Medium          string   `json:"medium"`
 	}
 
 	if err := ctx.ShouldBindJSON(&requestBody); err != nil {

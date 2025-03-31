@@ -48,6 +48,7 @@ type Format struct {
 }
 
 type Round struct {
+	Id           string `json:"id"`
 	Format_id    string `json:"format_id"`
 	Debate_id    string `json:"debate_id"`
 	Round_number int    `json:"round_number"`
