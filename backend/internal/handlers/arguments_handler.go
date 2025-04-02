@@ -25,7 +25,7 @@ func (h *ArgumentsHandler) GetArguments(ctx *gin.Context) {
 		Arguments []struct {
 			Sender   string `json:"user"`
 			Argument string `json:"argument"`
-		}
+		} `json:"arguments"`
 	}
 
 	if err := ctx.ShouldBindJSON(&requestBody); err != nil {
@@ -51,5 +51,4 @@ func (h *ArgumentsHandler) GetArguments(ctx *gin.Context) {
 		"ai_model":  requestBody.AiModel,
 		"arguments": counterArgument,
 	}})
-	// generate the counter arguments
 }

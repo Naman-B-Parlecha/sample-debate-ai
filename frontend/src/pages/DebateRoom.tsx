@@ -6,12 +6,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Brain, Mic, MicOff, Send, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { DebateScoreModal } from "@/components/ScoreModal";
+import axios from "axios";
 
 interface Message {
   id: string;
-  sender: "user" | "ai";
-  content: string;
+  user: "user" | "ai";
+  argument: string;
   timestamp: Date;
 }
 
@@ -19,28 +21,32 @@ export default function DebateRoomPage() {
   const location = useLocation();
   const debateDetails = location.state?.debateData;
   const formData = location.state?.formData;
+  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  useEffect(() => {
+    console.log("Debate Details:", debateDetails);
+    console.log("Form Data:", formData);
+  }, []);
 
-  console.log("Debate Details:", debateDetails);
-  console.log("Form Data:", formData);
   const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      sender: "user",
-      content:
-        "Animal testing causes unnecessary suffering to animals and there are now many alternatives available that don't require animal subjects. We should prioritize these humane alternatives.",
-      timestamp: new Date(Date.now() - 60000),
-    },
-    {
-      id: "2",
-      sender: "ai",
-      content:
-        "While animal welfare is important, many medical and scientific advances that save human lives have relied on animal testing. Complete elimination could slow critical research in areas like cancer and infectious diseases.",
-      timestamp: new Date(Date.now() - 30000),
-    },
+    // {
+    //   id: "1",
+    //   sender: "user",
+    //   content:
+    //     "Animal testing causes unnecessary suffering to animals and there are now many alternatives available that don't require animal subjects. We should prioritize these humane alternatives.",
+    //   timestamp: new Date(Date.now() - 60000),
+    // },
+    // {
+    //   id: "2",
+    //   sender: "ai",
+    //   content:
+    //     "While animal welfare is important, many medical and scientific advances that save human lives have relied on animal testing. Complete elimination could slow critical research in areas like cancer and infectious diseases.",
+    //   timestamp: new Date(Date.now() - 30000),
+    // },
   ]);
   const [message, setMessage] = useState("");
   const [timeRemaining, setTimeRemaining] = useState(
-    debateDetails?.duration || 72
+    formData?.duration * 60 || 10
   );
   const [userMicEnabled, setUserMicEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -57,6 +63,9 @@ export default function DebateRoomPage() {
         setTimeRemaining(timeRemaining - 1);
       }, 1000);
       return () => clearTimeout(timer);
+    } else if (timeRemaining === 0) {
+      setTimeRemaining(0);
+      setIsOpen(true);
     }
   }, [timeRemaining]);
 
@@ -64,27 +73,41 @@ export default function DebateRoomPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (message.trim()) {
       const userMessage: Message = {
         id: Date.now().toString(),
-        sender: "user",
-        content: message,
+        user: "user",
+        argument: message,
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, userMessage]);
       setMessage("");
 
-      setTimeout(() => {
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          sender: "ai",
-          content: "hello",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, aiMessage]);
-      }, 1000);
+      const res = await axios.post(
+        "http://localhost:1313/arguments/",
+        {
+          topic: debateDetails?.topic,
+          ai_model: formData?.ai_model,
+          arguments: [...messages],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log(res.data);
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        user: "ai",
+        argument: res.data["data"].arguments,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, aiMessage]);
     }
   };
 
@@ -97,6 +120,14 @@ export default function DebateRoomPage() {
 
   return (
     <div className="flex flex-col h-[56rem] bg-gray-50">
+      <DebateScoreModal
+        isOpen={isOpen}
+        onClose={() => {
+          setIsOpen(false);
+
+          navigate("/");
+        }}
+      />
       <div className="flex flex-1 h-full w-full">
         <div className="w-1/4 border-r bg-white p-4 flex flex-col">
           <div className="mb-6">
@@ -171,22 +202,22 @@ export default function DebateRoomPage() {
                 <div
                   key={msg.id}
                   className={`flex flex-col ${
-                    msg.sender === "user" ? "items-end" : "items-start"
+                    msg.user === "user" ? "items-end" : "items-start"
                   }`}
                 >
                   <span className="text-xs font-medium text-muted-foreground mb-1">
-                    {msg.sender === "user"
+                    {msg.user === "user"
                       ? formData?.username || "You"
                       : formData?.ai_model}
                   </span>
                   <Card
                     className={`p-4 max-w-3/4 ${
-                      msg.sender === "user"
+                      msg.user === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-white"
                     }`}
                   >
-                    <p>{msg.content}</p>
+                    <p>{msg.argument}</p>
                     <p className="text-xs mt-1 opacity-70">
                       {msg.timestamp.toLocaleTimeString([], {
                         hour: "2-digit",

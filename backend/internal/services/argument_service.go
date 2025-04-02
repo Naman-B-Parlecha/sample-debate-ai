@@ -79,7 +79,7 @@ func (s *ArgumentService) GenerateArguments(debateHistory []map[string]string, t
 	payload := DebateRequest{
 		Messages:    messages,
 		MaxTokens:   300,
-		Model:       "deepseek/deepseek-r1-turbo",
+		Model:       "mistralai/mistral-7b-instruct",
 		Temperature: 0.5,
 	}
 
@@ -111,6 +111,6 @@ func (s *ArgumentService) GenerateArguments(debateHistory []map[string]string, t
 	if len(result.Choices) == 0 {
 		return "", errors.New("no response generated")
 	}
-
+	fmt.Println(resp)
 	return result.Choices[0].Message.Content, nil
 }
