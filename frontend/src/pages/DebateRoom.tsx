@@ -82,32 +82,39 @@ export default function DebateRoomPage() {
         timestamp: new Date(),
       };
 
-      setMessages((prev) => [...prev, userMessage]);
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
       setMessage("");
 
-      const res = await axios.post(
-        "http://localhost:1313/arguments/",
-        {
-          topic: debateDetails?.topic,
-          ai_model: formData?.ai_model,
-          arguments: [...messages],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            "Content-Type": "application/json",
+      try {
+        const res = await axios.post(
+          "http://localhost:1313/arguments/",
+          {
+            topic: debateDetails?.topic,
+            ai_model: formData?.ai_model,
+            arguments: updatedMessages,
           },
-        }
-      );
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      console.log(res.data);
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        user: "ai",
-        argument: res.data["data"].arguments,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
+        console.log(res.data);
+
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          user: "ai",
+          argument: res.data["data"].arguments,
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, aiMessage]);
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
     }
   };
 
@@ -133,7 +140,7 @@ export default function DebateRoomPage() {
           <div className="mb-6">
             <h2 className="text-lg font-semibold mb-1">Topic</h2>
             <p className="text-sm text-muted-foreground">
-              {debateDetails?.topic || "Should animal testing be banned?"}
+              {formData?.topic || "Should animal testing be banned?"}
             </p>
             <p className="text-sm font-medium mt-2">
               Time Remaining:{" "}

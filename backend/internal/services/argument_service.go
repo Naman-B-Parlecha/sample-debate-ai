@@ -11,12 +11,13 @@ import (
 )
 
 type ArgumentService struct {
-	client    *supabase.Client
-	HF_APIkey string
+	client          *supabase.Client
+	HF_APIkey       string
+	OPEN_ROUTER_API string
 }
 
-func NewArgumentService(client *supabase.Client, HF_APIKey string) *ArgumentService {
-	return &ArgumentService{client: client, HF_APIkey: HF_APIKey}
+func NewArgumentService(client *supabase.Client, HF_APIKey string, OPEN_ROUTER_API string) *ArgumentService {
+	return &ArgumentService{client: client, HF_APIkey: HF_APIKey, OPEN_ROUTER_API: OPEN_ROUTER_API}
 }
 
 type DebateRequest struct {
@@ -39,8 +40,61 @@ type DebateResponse struct {
 	} `json:"choices"`
 }
 
-func (s *ArgumentService) GenerateArguments(debateHistory []map[string]string, topic string) (string, error) {
-	apiURL := "https://router.huggingface.co/novita/v3/openai/chat/completions"
+type ModelConfig struct {
+	APIURL string
+	Model  string
+}
+
+var modelConfigs = map[string]ModelConfig{
+	"Mistral-7b": {
+		APIURL: "https://router.huggingface.co/novita/v3/openai/chat/completions",
+		Model:  "mistralai/mistral-7b-instruct",
+	},
+	"Falcon-7B": {
+		APIURL: "https://router.huggingface.co/hf-inference/models/tiiuae/falcon-7b-instruct/v1/chat/completions",
+		Model:  "tiiuae/falcon-7b-instruct",
+	},
+	"Mixtral 8x7B": {
+		APIURL: "https://router.huggingface.co/together/v1/chat/completions",
+		Model:  "mistralai/Mixtral-8x7B-Instruct-v0.1",
+	},
+	"Llama-3.1-405B": {
+		APIURL: "https://router.huggingface.co/nebius/v1/chat/completions",
+		Model:  "meta-llama/Meta-Llama-3.1-405B-Instruct",
+	},
+	"Llama-3.2": {
+		APIURL: "https://openrouter.ai/api/v1/chat/completions",
+		Model:  "meta-llama/llama-3.2-3b-instruct:free",
+	},
+	"Mistral Nemo": {
+		APIURL: "https://openrouter.ai/api/v1/chat/completions",
+		Model:  "mistralai/mistral-nemo:free",
+	},
+	"Mistral-Small-3.1": {
+		APIURL: "https://openrouter.ai/api/v1/chat/completions",
+		Model:  "mistralai/mistral-small-3.1-24b-instruct:free",
+	},
+	"Llama 3.3": {
+		APIURL: "https://openrouter.ai/api/v1/chat/completions",
+		Model:  "meta-llama/llama-3.3-70b-instruct:free",
+	},
+	"DeepSeek R1": {
+		APIURL: "https://openrouter.ai/api/v1/chat/completions",
+		Model:  "deepseek/deepseek-r1:free",
+	},
+}
+
+func (s *ArgumentService) GenerateArguments(modelName string, debateHistory []map[string]string, topic string) (string, error) {
+	config, exists := modelConfigs[modelName]
+	env := ""
+	if config.APIURL == "https://openrouter.ai/api/v1/chat/completions" {
+		env = s.OPEN_ROUTER_API
+	} else {
+		env = s.HF_APIkey
+	}
+	if !exists {
+		return "", fmt.Errorf("unknown model: %s", modelName)
+	}
 
 	messages := []Message{
 		{
@@ -49,7 +103,7 @@ func (s *ArgumentService) GenerateArguments(debateHistory []map[string]string, t
 
 			### Debate Rules:
 			1. **Do NOT just react to the last argument**—analyze the full debate history.
-			2. Identify flaws, inconsistencies, or weak points in the opponent’s stance.
+			2. Identify flaws, inconsistencies, or weak points in the opponent's stance.
 			3. Use structured counterpoints (max 3-4) while maintaining debate flow.
 			4. **No filler phrases** like "maybe" or "perhaps"—respond with confidence.
 			5. Responses should be **concise (under 300 characters).**
@@ -78,8 +132,8 @@ func (s *ArgumentService) GenerateArguments(debateHistory []map[string]string, t
 
 	payload := DebateRequest{
 		Messages:    messages,
-		MaxTokens:   300,
-		Model:       "mistralai/mistral-7b-instruct",
+		MaxTokens:   400,
+		Model:       config.Model,
 		Temperature: 0.5,
 	}
 
@@ -90,10 +144,10 @@ func (s *ArgumentService) GenerateArguments(debateHistory []map[string]string, t
 
 	client := resty.New()
 	resp, err := client.R().
-		SetHeader("Authorization", "Bearer "+s.HF_APIkey).
+		SetHeader("Authorization", "Bearer "+env).
 		SetHeader("Content-Type", "application/json").
 		SetBody(jsonPayload).
-		Post(apiURL)
+		Post(config.APIURL)
 
 	if err != nil {
 		return "", fmt.Errorf("API request failed: %w", err)
@@ -111,6 +165,9 @@ func (s *ArgumentService) GenerateArguments(debateHistory []map[string]string, t
 	if len(result.Choices) == 0 {
 		return "", errors.New("no response generated")
 	}
+
 	fmt.Println(resp)
 	return result.Choices[0].Message.Content, nil
 }
+
+// okay implement open router ka routes here

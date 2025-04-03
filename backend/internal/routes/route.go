@@ -13,6 +13,7 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 
 	supabaseClient := supabase.NewSupabaseClient(cfg)
 	HF_APIkey := cfg.HF_ApiKey
+	OPEN_ROUTER_API := cfg.OPEN_ROUTER_API
 	// this is for auth routes
 	authServices := services.NewAuthService(supabaseClient)
 	authHandler := handler.NewAuthHandler(authServices)
@@ -45,7 +46,7 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 	}
 
 	// this is for arguments routes
-	argumentService := services.NewArgumentService(supabaseClient, HF_APIkey)
+	argumentService := services.NewArgumentService(supabaseClient, HF_APIkey, OPEN_ROUTER_API)
 	argumentsHandler := handler.NewArgumentsHandler(argumentService)
 
 	argumentsGroup := r.Group("arguments")

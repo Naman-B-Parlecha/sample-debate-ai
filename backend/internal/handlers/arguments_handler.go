@@ -41,7 +41,7 @@ func (h *ArgumentsHandler) GetArguments(ctx *gin.Context) {
 		}
 	}
 
-	counterArgument, err := h.argumentService.GenerateArguments(args, requestBody.Topic)
+	counterArgument, err := h.argumentService.GenerateArguments(requestBody.AiModel, args, requestBody.Topic)
 	if err != nil {
 		ctx.JSON(500, gin.H{"message": "Failed to generate arguments", "error": err.Error()})
 		return
