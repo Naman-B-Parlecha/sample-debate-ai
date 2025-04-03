@@ -54,4 +54,14 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 	{
 		argumentsGroup.POST("/", argumentsHandler.GetArguments)
 	}
+
+	// this is for judge routes
+	judgeService := services.NewJudgingService(supabaseClient, OPEN_ROUTER_API)
+	judgeHandler := handler.NewJudgeHandler(judgeService)
+
+	judgeGroup := r.Group("judge")
+	judgeGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+	{
+		judgeGroup.POST("/", judgeHandler.GenerateScores)
+	}
 }
