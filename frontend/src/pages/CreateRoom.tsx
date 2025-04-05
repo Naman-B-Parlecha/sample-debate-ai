@@ -76,7 +76,7 @@ export default function CreateDebatePage() {
       };
       console.log("AI Debate Form Data:", formData);
 
-      const res = await axios.post("http://localhost:1313/debate/", formData, {
+      const res = await axios.post("https://sample-debate-ai-production.up.railway.app/debate/", formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           "Content-Type": "application/json",

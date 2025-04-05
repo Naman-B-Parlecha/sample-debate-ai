@@ -88,7 +88,7 @@ export default function DebateRoomPage() {
 
       try {
         const res = await axios.post(
-          "http://localhost:1313/arguments/",
+          "https://sample-debate-ai-production.up.railway.app/arguments/",
           {
             topic: debateDetails?.topic,
             ai_model: formData?.ai_model,

@@ -21,7 +21,7 @@ export default function SignUpPage() {
     console.log({ email, password });
     try {
       const res = await axios.post(
-        "http://localhost:1313/auth/register",
+        "https://sample-debate-ai-production.up.railway.app/auth/register",
         { email: email, password: password },
         { headers: { "Content-Type": "application/json" } }
       );
