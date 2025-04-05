@@ -43,7 +43,7 @@ export default function CreateDebatePage() {
     duration: 2,
     participant_type: "ai",
     difficulty: "easy",
-    ai_model: "",
+    ai_model: "Mistral-7b",
     position: "for",
     medium: "text",
   });
