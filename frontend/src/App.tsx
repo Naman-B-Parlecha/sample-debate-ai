@@ -8,6 +8,7 @@ import DebateRoomPage from "./pages/DebateRoom.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import LeaderBoard from "./pages/LeaderBoard.tsx";
 import JoinRoom from "./pages/JoinRoom.tsx";
+import ProfilePage from "./pages/ProfilePage.tsx";
 
 const App: React.FC = () => {
   return (
@@ -21,6 +22,7 @@ const App: React.FC = () => {
             <Route path="/debate/:roomId" element={<DebateRoomPage />} />
             <Route path="/leaderboard" element={<LeaderBoard />} />
             <Route path="/join-room" element={<JoinRoom />} />
+            <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Routes>
     </BrowserRouter>
