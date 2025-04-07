@@ -56,7 +56,7 @@ func SetupRoutes(r *gin.Engine, cfg *config.Config) {
 	}
 
 	// this is for judge routes
-	judgeService := services.NewJudgingService(supabaseClient, OPEN_ROUTER_API)
+	judgeService := services.NewJudgingService(supabaseClient, OPEN_ROUTER_API, HF_APIkey)
 	judgeHandler := handler.NewJudgeHandler(judgeService)
 
 	judgeGroup := r.Group("judge")

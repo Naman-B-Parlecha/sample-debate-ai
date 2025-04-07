@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -23,27 +24,17 @@ export default function DebateRoomPage() {
   const formData = location.state?.formData;
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const [scores, setScores] = useState({
+    clarity : 0,
+    relevance : 0,
+    strength : 0,
+  })
   useEffect(() => {
     console.log("Debate Details:", debateDetails);
     console.log("Form Data:", formData);
   }, []);
 
-  const [messages, setMessages] = useState<Message[]>([
-    // {
-    //   id: "1",
-    //   sender: "user",
-    //   content:
-    //     "Animal testing causes unnecessary suffering to animals and there are now many alternatives available that don't require animal subjects. We should prioritize these humane alternatives.",
-    //   timestamp: new Date(Date.now() - 60000),
-    // },
-    // {
-    //   id: "2",
-    //   sender: "ai",
-    //   content:
-    //     "While animal welfare is important, many medical and scientific advances that save human lives have relied on animal testing. Complete elimination could slow critical research in areas like cancer and infectious diseases.",
-    //   timestamp: new Date(Date.now() - 30000),
-    // },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const [timeRemaining, setTimeRemaining] = useState(
     formData?.duration * 60 || 10
@@ -57,6 +48,38 @@ export default function DebateRoomPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  async function handleJudgeScore() {
+    try {
+      const res = await axios.post(
+        "https://sample-debate-ai-production.up.railway.app/judge/",
+        {
+          topic: debateDetails?.topic,
+          arguments: messages,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log(res.data);
+      const judgeScore = res.data;
+      setScores({
+        clarity: judgeScore.clarity,
+        relevance: judgeScore.relevance,
+        strength: judgeScore.strength,
+      });
+      setIsOpen(true);
+      setTimeRemaining(0);
+      setMessages([]);
+      setMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  }
+
   useEffect(() => {
     if (timeRemaining > 0) {
       const timer = setTimeout(() => {
@@ -64,10 +87,9 @@ export default function DebateRoomPage() {
       }, 1000);
       return () => clearTimeout(timer);
     } else if (timeRemaining === 0) {
-      setTimeRemaining(0);
-      setIsOpen(true);
+      handleJudgeScore();
     }
-  }, [timeRemaining]);
+  }, [timeRemaining, handleJudgeScore]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -134,6 +156,7 @@ export default function DebateRoomPage() {
 
           navigate("/");
         }}
+        scores={scores}
       />
       <div className="flex flex-1 h-full w-full">
         <div className="w-1/4 border-r bg-white p-4 flex flex-col">

@@ -43,6 +43,7 @@ type DebateResponse struct {
 type ModelConfig struct {
 	APIURL string
 	Model  string
+	Token  int
 }
 
 var modelConfigs = map[string]ModelConfig{
@@ -50,14 +51,14 @@ var modelConfigs = map[string]ModelConfig{
 		APIURL: "https://router.huggingface.co/novita/v3/openai/chat/completions",
 		Model:  "mistralai/mistral-7b-instruct",
 	},
-	"Falcon-7B": {
-		APIURL: "https://router.huggingface.co/hf-inference/models/tiiuae/falcon-7b-instruct/v1/chat/completions",
-		Model:  "tiiuae/falcon-7b-instruct",
-	},
-	"Mixtral 8x7B": {
-		APIURL: "https://router.huggingface.co/together/v1/chat/completions",
-		Model:  "mistralai/Mixtral-8x7B-Instruct-v0.1",
-	},
+	// "Falcon-7B": {
+	// 	APIURL: "https://router.huggingface.co/hf-inference/models/tiiuae/falcon-7b-instruct/v1/chat/completions",
+	// 	Model:  "tiiuae/falcon-7b-instruct",
+	// },
+	// "Mixtral 8x7B": {
+	// 	APIURL: "https://router.huggingface.co/nebius/v1/chat/completions",
+	// 	Model:  "mistralai/Mixtral-8x7B-Instruct-v0.1-fast",
+	// },
 	"Llama-3.1-405B": {
 		APIURL: "https://router.huggingface.co/nebius/v1/chat/completions",
 		Model:  "meta-llama/Meta-Llama-3.1-405B-Instruct",
@@ -81,6 +82,7 @@ var modelConfigs = map[string]ModelConfig{
 	"DeepSeek R1": {
 		APIURL: "https://openrouter.ai/api/v1/chat/completions",
 		Model:  "deepseek/deepseek-r1:free",
+		Token:  10000,
 	},
 }
 
@@ -130,9 +132,13 @@ func (s *ArgumentService) GenerateArguments(modelName string, debateHistory []ma
 		Content: "Analyze the full debate and generate a well-structured counterargument.",
 	})
 
+	tokens := 500
+	if config.Token != 0 {
+		tokens = config.Token
+	}
 	payload := DebateRequest{
 		Messages:    messages,
-		MaxTokens:   400,
+		MaxTokens:   tokens,
 		Model:       config.Model,
 		Temperature: 0.5,
 	}

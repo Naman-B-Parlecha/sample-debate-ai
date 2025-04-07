@@ -10,15 +10,21 @@ import { Button } from "./ui/button";
 export function DebateScoreModal({
   isOpen,
   onClose,
+  scores,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  scores: {
+    clarity: number;
+    relevance: number;
+    strength: number;
+  };
 }) {
   return (
     <Dialog open={isOpen}>
       <DialogContent
         className="sm:max-w-[425px] md:max-w-[700px] rounded-lg"
-        onInteractOutside={onClose} 
+        onInteractOutside={onClose}
         onEscapeKeyDown={onClose}
       >
         <DialogHeader>
@@ -31,24 +37,26 @@ export function DebateScoreModal({
           {/* Score Items */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Clarity</span>
-            <span className="text-sm font-bold">0.75</span>
+            <span className="text-sm font-bold">{scores.clarity / 5}</span>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Strength</span>
-            <span className="text-sm font-bold">0.65</span>
+            <span className="text-sm font-bold">{scores.strength / 5}</span>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Relevance</span>
-            <span className="text-sm font-bold">0.9</span>
+            <span className="text-sm font-bold">{scores.relevance / 5}</span>
           </div>
 
           {/* Final Score */}
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <span className="text-lg font-semibold">Final Score</span>
-              <span className="text-xl font-bold">0.7</span>
+              <span className="text-xl font-bold">
+                {(scores.clarity + scores.relevance + scores.strength) / 15}
+              </span>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/nedpals/supabase-go"
@@ -13,10 +14,24 @@ import (
 type JudgeService struct {
 	client          *supabase.Client
 	OPEN_ROUTER_API string
+	HF_APIkey       string
+}
+type Judgement struct {
+	Argument string `json:"argument"`
+	Scores   struct {
+		Clarity   int `json:"clarity"`
+		Relevance int `json:"relevance"`
+		Strength  int `json:"strength"`
+	} `json:"scores"`
+	Feedback string `json:"feedback"`
 }
 
-func NewJudgingService(client *supabase.Client, OPEN_ROUTER string) *JudgeService {
-	return &JudgeService{client: client, OPEN_ROUTER_API: OPEN_ROUTER}
+type JudgementResponse struct {
+	Content string `json:"content"`
+}
+
+func NewJudgingService(client *supabase.Client, OPEN_ROUTER string, HF_API_KEY string) *JudgeService {
+	return &JudgeService{client: client, OPEN_ROUTER_API: OPEN_ROUTER, HF_APIkey: HF_API_KEY}
 }
 
 func (s *JudgeService) GenerateScores(debateHistory []map[string]string, topic string) (map[string]float64, error) {
@@ -24,23 +39,42 @@ func (s *JudgeService) GenerateScores(debateHistory []map[string]string, topic s
 	messages := []Message{
 		{
 			Role: "system",
-			Content: fmt.Sprintf(`You are an impartial debate judge with expertise in logical reasoning, argument evaluation, and debate scoring.
+			Content: fmt.Sprintf(`You are a strict debate judge analyzing ONLY the last user argument. Respond EXCLUSIVELY in this JSON format:
 
-	### **Task:**
-	- Analyze the full debate history provided below.
-	- Score the **human participant's overall performance** (ignore AI responses) based on three criteria:
-	  1. **Clarity (1-10):** Are the human's arguments, as a whole, clear, coherent, and easy to follow?
-	  2. **Relevance (1-10):** Do the human's arguments collectively address the debate topic "%s"?
-	  3. **Strength (1-10):** Are the human's arguments, taken together, logically sound, supported by evidence, and effective against the opponent's points?
+			{
+			  "argument": "[user's exact argument text]",
+			  "scores": {
+			    "clarity": [1-5],
+			    "relevance": [1-5], 
+			    "strength": [1-5]
+			  },
+			  "feedback": "[specific improvement suggestion]"
+			}
 
-	### **Instructions:**
-	- Provide a single set of scores for the human participant's overall contribution.
-	- Return scores in a structured JSON-like format, e.g.:
-	- Do not score individual arguments separately or generate additional commentary.
+			### Scoring Criteria (1-5):
+			1. CLARITY: Is the argument unambiguous? (1=confusing, 5=crystal clear)
+			2. RELEVANCE: Does it address the topic? (1=tangential, 5=directly on-point)
+			3. STRENGTH: Is it well-supported? (1=unsubstantiated, 5=evidence-backed)
 
-	### **Debate Context:**
-	- Topic: "%s"
-	- History follows below.`, topic, topic),
+			### Rules:
+			- NEVER include analysis text outside the JSON
+			- NEVER evaluate assistant/ai arguments
+			- ALWAYS provide all three scores
+			- Feedback must be actionable
+
+			Example Input: "We should prioritize ocean exploration"
+			Example Output:
+			{
+			  "argument": "We should prioritize ocean exploration",
+			  "scores": {
+			    "clarity": 4,
+			    "relevance": 5,
+			    "strength": 3
+			  },
+			  "feedback": "Include specific examples of unexplored ocean resources to strengthen your case."
+			}
+
+			Now evaluate this argument: "%s"`, topic),
 		},
 	}
 	for _, entry := range debateHistory {
@@ -62,7 +96,7 @@ func (s *JudgeService) GenerateScores(debateHistory []map[string]string, topic s
 	payload := DebateRequest{
 		Messages:    messages,
 		MaxTokens:   300,
-		Model:       "deepseek/deepseek-r1:free",
+		Model:       "accounts/fireworks/models/mixtral-8x7b-instruct",
 		Temperature: 0.2,
 	}
 
@@ -73,10 +107,10 @@ func (s *JudgeService) GenerateScores(debateHistory []map[string]string, topic s
 
 	client := resty.New()
 	resp, err := client.R().
-		SetHeader("Authorization", "Bearer "+s.OPEN_ROUTER_API).
+		SetHeader("Authorization", "Bearer "+s.HF_APIkey).
 		SetHeader("Content-Type", "application/json").
 		SetBody(jsonPayload).
-		Post("https://openrouter.ai/api/v1/chat/completions")
+		Post("https://router.huggingface.co/fireworks-ai/inference/v1/chat/completions")
 
 	if err != nil {
 		return map[string]float64{}, fmt.Errorf("API request failed: %w", err)
@@ -86,15 +120,39 @@ func (s *JudgeService) GenerateScores(debateHistory []map[string]string, topic s
 		return map[string]float64{}, fmt.Errorf("API returned status %d: %s", resp.StatusCode(), resp.Body())
 	}
 
+	fmt.Println(resp)
 	var result DebateResponse
 	if err := json.Unmarshal(resp.Body(), &result); err != nil {
-		return map[string]float64{}, fmt.Errorf("failed to parse response: %w", err)
+		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	if len(result.Choices) == 0 {
-		return map[string]float64{}, errors.New("no response generated")
+		return nil, errors.New("no response generated")
 	}
 
-	fmt.Println(resp)
-	return map[string]float64{}, nil
+	// Extract the JSON judgement from the response content
+	content := result.Choices[0].Message.Content
+
+	var judgement Judgement
+	if err := json.Unmarshal([]byte(content), &judgement); err != nil {
+		// If direct parsing fails, try to extract the JSON part
+		start := strings.Index(content, "{")
+		end := strings.LastIndex(content, "}") + 1
+		if start == -1 || end == 0 {
+			return nil, fmt.Errorf("no valid JSON judgement found in response")
+		}
+
+		if err := json.Unmarshal([]byte(content[start:end]), &judgement); err != nil {
+			return nil, fmt.Errorf("failed to parse judgement: %w", err)
+		}
+	}
+
+	// Convert scores to float64 map
+	scores := map[string]float64{
+		"clarity":   float64(judgement.Scores.Clarity),
+		"relevance": float64(judgement.Scores.Relevance),
+		"strength":  float64(judgement.Scores.Strength),
+	}
+
+	return scores, nil
 }
